@@ -1,0 +1,26 @@
+{
+  "name": "koishi-plugin-rpixiv",
+  "description": "search pixiv",
+  "version": "0.0.1",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "license": "MIT",
+  "scripts": {},
+  "keywords": [
+    "chatbot",
+    "koishi",
+    "plugin"
+  ],
+  "peerDependencies": {
+    "koishi": "^4.11.6"
+  },
+  "dependencies": {
+    "axios": "0.26.1",
+    "dotenv": "^16.0.3",
+    "runtu-pixiv-sdk": "^1.0.18"
+  }
+}

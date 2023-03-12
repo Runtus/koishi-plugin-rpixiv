@@ -5,7 +5,6 @@ import { requestBuffers } from '../components'
 
 export const illustsPush: (trigger: string, type: string, r: RPixiv) => Middleware = (trigger, type, rPixiv) => {
     const triggerC = trigger
-    console.log("sdsdsds",trigger)
     let requestFn: RPixiv['getMonthRanks'] | RPixiv['getDayRanks'] | RPixiv['getWeekRanks'] = undefined
     if (type === 'day') {
         requestFn = rPixiv.getDayRanks
@@ -18,7 +17,6 @@ export const illustsPush: (trigger: string, type: string, r: RPixiv) => Middlewa
     }
     return (session, next) => {
         if (session.content.startsWith(triggerC)) {
-            console.log('触发了')
             requestFn.call(rPixiv, "").then(res => {
                 if (res.code === 200) {
                     return requestBuffers(res.data.illusts, rPixiv)

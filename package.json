@@ -1,8 +1,20 @@
 {
   "name": "koishi-plugin-rpixiv",
   "description": "search pixiv",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Runtus/koishi-plugin-rpixiv.git"
+  },
+  "koishi": {
+    "description": {
+      "zh": "能够获取pixiv图片的插件"
+    },
+    "locales": [
+      "zh"
+    ]
+  },
   "typings": "lib/index.d.ts",
   "files": [
     "lib",

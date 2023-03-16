@@ -7,38 +7,42 @@ export const name = 'rpixiv'
 
 
 export interface Config {
-  refresh: string,
-  keywords: {
+  token: string,
     start: string,
     day: string,
     week: string,
     month: string,
     searchIllusts: string,
     searchAuthor: string,
-  },
-  proxy: {
     isOpen: boolean,
     host: string,
     port: number
-  }
 }
 
-export const Config: Schema<Config> = Schema.object({
-  refresh: Schema.string().required().default("").description("Pixiv的RefreshToken"),
-  keywords: Schema.object({
-    start: Schema.string().default("").description("机器人的触发词。"),
-    day: Schema.string().default("").description("每日推荐榜的触发语，紧跟着start字段触发词"),
-    week: Schema.string().default("").description("每周推荐榜的触发语，紧跟着start字段触发词"),
-    month: Schema.string().default("").description("每月推荐榜的触发语，紧跟着start字段触发词"),
-    searchIllusts: Schema.string().default("").description("输入关键字，获取关键字相关插画"),
-    searchAuthor:  Schema.string().default("").description("输入作者pid号，获取作者相关信息"),
+export const Config = Schema.intersect([
+  Schema.object({
+    token: Schema.string().description("pixiv令牌").role("secret").required()
   }),
-  proxy: Schema.object({
+
+  Schema.object({}).description("机器人触发语设置"),
+
+  Schema.object({
+    start: Schema.string().description("机器人启示触发语").default("rPixiv酱").required(),
+    day: Schema.string().default("查询每日排行榜").description("每日推荐榜的触发语，紧跟着start字段触发词").required(),
+    week: Schema.string().default("查询每周排行榜").description("每周推荐榜的触发语，紧跟着start字段触发词").required(),
+    month: Schema.string().default("查询每月排行榜").description("每月推荐榜的触发语，紧跟着start字段触发词").required(),
+    searchIllusts: Schema.string().default("搜索插画").description("输入关键字，获取关键字相关插画").required(),
+    searchAuthor: Schema.string().default("搜索作者").description("输入作者pid号，获取作者相关信息").required(),
+  }),
+
+  Schema.object({}).description("代理设置"),
+
+  Schema.object({
     isOpen: Schema.boolean().default(false).description("是否开启代理"),
     host: Schema.string().default("").description("代理的host"),
     port: Schema.number().default(0).description("代理端口")
   })
-})
+])
 
 
 
@@ -47,19 +51,30 @@ export function apply(ctx: Context, config: Config) {
 
   // trigger keywords设置
   const keywords = {
-    ...config.keywords
-  }
-  
-  for (const [key, word] of Object.entries(config.keywords)) {
-    if (key !== config.keywords.start) {
-      keywords[key] = config.keywords.start + word
+    ...{
+      start: config.start,
+      day: config.day,
+      week: config.week,
+      month: config.month,
+      searchIllusts: config.searchIllusts,
+      searchAuthor: config.searchAuthor
     }
   }
 
-  const rPixiv = new RPixiv(config.proxy.isOpen ? {...config.proxy} : undefined)
+ 
+  
+  for (const [key, value] of Object.entries(keywords)) {
+    if (value !== keywords.start) {
+      keywords[key] = keywords.start + value
+    }
+  }
+
+  console.log(keywords)
+
+  const rPixiv = new RPixiv(config.isOpen ? {host: config.host, port: config.port} : undefined)
 
   // 环境变量设置
-  process.env.REFEESH_TOKEN = config.refresh
+  process.env.REFEESH_TOKEN = config.token
   // token初始化
   rPixiv.token()
 

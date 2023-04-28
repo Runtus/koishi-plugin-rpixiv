@@ -27,12 +27,12 @@ export const Config = Schema.intersect([
   Schema.object({}).description("机器人触发语设置"),
 
   Schema.object({
-    start: Schema.string().description("机器人启示触发语").required().default("rPixiv酱"),
-    day: Schema.string().description("每日推荐榜的触发语，紧跟着start字段触发词").required().default("查询每日排行榜"),
-    week: Schema.string().description("每周推荐榜的触发语，紧跟着start字段触发词").required().default("查询每周排行榜"),
-    month: Schema.string().description("每月推荐榜的触发语，紧跟着start字段触发词").required().default("查询每月排行榜"),
-    searchIllusts: Schema.string().description("输入关键字，获取关键字相关插画").required().default("搜索插画"),
-    searchAuthor: Schema.string().description("输入作者pid号，获取作者相关信息").required().default("搜索作者"),
+    start: Schema.string().description("机器人启示触发语").default("rPixiv酱"),
+    day: Schema.string().description("每日推荐榜的触发语，紧跟着start字段触发词").default("查询每日排行榜"),
+    week: Schema.string().description("每周推荐榜的触发语，紧跟着start字段触发词").default("查询每周排行榜"),
+    month: Schema.string().description("每月推荐榜的触发语，紧跟着start字段触发词").default("查询每月排行榜"),
+    searchIllusts: Schema.string().description("输入关键字，获取关键字相关插画").default("搜索插画"),
+    searchAuthor: Schema.string().description("输入作者pid号，获取作者相关信息").default("搜索作者"),
   }),
 
   Schema.object({}).description("代理设置"),
@@ -72,7 +72,7 @@ export function apply(ctx: Context, config: Config) {
   const rPixiv = new RPixiv(config.isOpen ? {host: config.host, port: config.port} : undefined)
 
   // 环境变量设置
-  process.env.REFEESH_TOKEN = config.token
+  process.env.REFRESH_TOKEN = config.token
   // token初始化
   rPixiv.token()
 

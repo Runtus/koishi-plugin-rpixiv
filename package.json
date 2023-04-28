@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-rpixiv",
   "description": "search pixiv",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "main": "lib/index.js",
   "repository": {
     "type": "git",
@@ -33,6 +33,6 @@
   "dependencies": {
     "axios": "0.26.1",
     "dotenv": "^16.0.3",
-    "runtu-pixiv-sdk": "^1.0.18"
+    "runtu-pixiv-sdk": "^1.1.0"
   }
 }

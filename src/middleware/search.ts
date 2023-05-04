@@ -10,10 +10,10 @@ export const rPixivIllustsSearch: (trigger: string, r: RPixiv) => Middleware = (
             const words = session.content.slice(trigger.length)
             rpixiv.searchIllusts(words)
                 .then((res) => {
-                    if (res.code === 400) {
+                    if (res.illusts.length === 0) {
                         session.send("网络出现问题，请联系管理员")
                     } else {
-                        return requestBuffers(res.data.illusts, rpixiv)
+                        return requestBuffers(res.illusts, rpixiv)
                     }
                 })
                 .then(info => {
@@ -43,12 +43,14 @@ export const rPixivAuthorSearch: (trigger: string, r: RPixiv) => Middleware = (t
                         rpixiv.getAuthorIllusts(words, "illust")
                     ]
                 ).then(async (res) => {
-                    const { user } = res[0].data
-                    const { illusts } = res[1].data
+                    const user = res[0].user
+                    const illusts = res[1].illusts
+                    // @ts-ignore TODO 修复rpixivSDK上的类型
+                    const comment = user.comment as string
                     session.send(
                         `<>
                         <p> 画师名称: ${user.name} </p>
-                        <p> 画师介绍: ${user.comment}  </p>
+                        <p> 画师介绍: ${comment}  </p>
                         <p> 画师主页: https://www.pixiv.net/users/${user.id} </p>
                         <div style="width='200px'"> 画师部分作品: ${await requestBuffers((illusts as WebPixivType["illusts"]).slice(0,5), rpixiv)} </div>
                     </>

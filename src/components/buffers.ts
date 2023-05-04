@@ -6,6 +6,7 @@ export const requestBuffers = (urls: WebPixivType["illusts"], r: RPixiv) => {
   urls.slice(0, 10).forEach((item) => {
     promise.push(r.getPixivStream(item.image_urls.medium, "arraybuffer"));
   });
+
   return Promise.all(promise).then((res) => {
     return h(
       "p",

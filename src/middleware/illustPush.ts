@@ -18,14 +18,15 @@ export const illustsPush: (trigger: string, type: string, r: RPixiv) => Middlewa
     return (session, next) => {
         if (session.content.startsWith(triggerC)) {
             requestFn.call(rPixiv, "").then(res => {
-                if (res.code === 200) {
-                    return requestBuffers(res.data.illusts, rPixiv)
+                console.log(res.illusts.length)
+                if (res.illusts.length !== 0) {
+                    return requestBuffers(res.illusts, rPixiv)
                 } else {
                     session.send("网络出现错误，请联系管理员")
                 }
             }).then(info => { 
                 session.send(info)
-            }).catch(() => {
+            }).catch((err) => {
                 session.send("出现了渣不多得勒的错误")
             })
         } else {

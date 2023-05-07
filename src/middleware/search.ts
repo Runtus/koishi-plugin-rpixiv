@@ -1,68 +1,55 @@
-import { Middleware } from 'koishi'
-import { RPixiv, WebPixivType } from 'runtu-pixiv-sdk'
-import { requestBuffers } from '../components'
+import { Element } from "koishi";
+import { RPixiv, WebPixivType } from "runtu-pixiv-sdk";
+import { requestBuffers } from "../components";
 
+export const rPixivIllustsSearch: (
+  params: string,
+  r: RPixiv
+) => Promise<string | Element> = async (params, rpixiv) => {
+  let info: string | Element;
 
-export const rPixivIllustsSearch: (trigger: string, r: RPixiv) => Middleware = (trigger, rpixiv) => {
-    return  (session, next) => {
-        // 指定前缀
-        if (session.content.startsWith(trigger)) {
-            const words = session.content.slice(trigger.length)
-            rpixiv.searchIllusts(words)
-                .then((res) => {
-                    if (res.illusts.length === 0) {
-                        session.send("网络出现问题，请联系管理员")
-                    } else {
-                        return requestBuffers(res.illusts, rpixiv)
-                    }
-                })
-                .then(info => {
-                    session.send(info)
-                })
-                .catch((err) => {
-                    console.log(err)
-                    session.send("出现了渣不多得勒的错误，请联系管理员")
-                })
-            
-        } else {
-            next()
-        }
+  try {
+    const response = await rpixiv.searchIllusts(params);
+    if (response.illusts.length === 0) {
+      info = "网络出现问题，请联系管理员";
+    } else {
+      info = await requestBuffers(response.illusts, rpixiv);
     }
-}
+  } catch (err) {
+    console.error(err);
+    info = "出现了未知的错误，请联系管理员";
+  }
 
-export const rPixivAuthorSearch: (trigger: string, r: RPixiv) => Middleware = (trigger, rpixiv) => {
-    return (session, next) => {
-        if (session.content.startsWith(trigger)) {
-            const words = session.content.slice(trigger.length)
-            if (isNaN(Number(words))) {
-                session.send("作者的pid应该只包含数字")
-            } else {
-                Promise.all(
-                    [
-                        rpixiv.getAuthorInfo(words),
-                        rpixiv.getAuthorIllusts(words, "illust")
-                    ]
-                ).then(async (res) => {
-                    const user = res[0].user
-                    const illusts = res[1].illusts
-                    // @ts-ignore TODO 修复rpixivSDK上的类型
-                    const comment = user.comment as string
-                    session.send(
-                        `<>
-                        <p> 画师名称: ${user.name} </p>
-                        <p> 画师介绍: ${comment}  </p>
-                        <p> 画师主页: https://www.pixiv.net/users/${user.id} </p>
-                        <div style="width='200px'"> 画师部分作品: ${await requestBuffers((illusts as WebPixivType["illusts"]).slice(0,5), rpixiv)} </div>
-                    </>
-                    `
-                    )
-                }).catch(err => {
-                    console.log(err)
-                    session.send("请求画师信息出现错误，请联系管理员")
-                })
-            }
-        } else {
-            next()
-        }
-    }
-}
+  return info;
+};
+
+export const rPixivAuthorSearch: (
+  params: string,
+  r: RPixiv
+) => Promise<string | Element> = async (params, rpixiv) => {
+  let info: string | Element;
+
+  try {
+    const response = await Promise.all([
+      rpixiv.getAuthorInfo(params),
+      rpixiv.getAuthorIllusts(params, "illust"),
+    ]);
+    const user = response[0].user;
+    const illusts = response[1].illusts;
+
+    // @ts-ignore TODO 修复rpixivSDK上的类型
+    const comment = user.comment as string;
+    info = `<>
+        <p> 画师名称: ${user.name} </p>
+        <p> 画师介绍: ${comment}  </p>
+        <p> 画师主页: https://www.pixiv.net/users/${user.id} </p>
+        <div style="width='200px'"> 画师部分作品: ${await requestBuffers(
+          (illusts as WebPixivType["illusts"]).slice(0, 5),
+          rpixiv
+        )} </div>
+    </>`;
+  } catch (err) {
+    info = "请求画师信息出现错误，请联系管理员";
+  }
+  return info;
+};

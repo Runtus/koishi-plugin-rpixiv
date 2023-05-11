@@ -1,7 +1,13 @@
-import { Middleware, Element } from "koishi";
+import { Element, h } from "koishi";
 import { RPixiv } from "runtu-pixiv-sdk";
 import { requestBuffers } from "../components";
 import { logger } from "../logger";
+
+enum TypesToChinese {
+  "day" = "每日",
+  "week" = "每周",
+  "month" = "每月"
+}
 
 export const illustsPush: (
   type: string,
@@ -25,7 +31,10 @@ export const illustsPush: (
     try {
         const response = await requestFn.call(rPixiv, "")
         if (response.illusts) {
-            info = await requestBuffers(response.illusts, rPixiv)
+            // info = await requestBuffers(response.illusts, rPixiv)
+          response.illusts =  response.illusts.slice(0, 10)
+          console.log(response)
+          info = h("div", {}, h("h3", {}, `🌟Pixiv${TypesToChinese[type]}排行榜🌟  📅${response.date}`), await requestBuffers(response.illusts, rPixiv))
         } else {
             info = "请求的插画数为0"
         }

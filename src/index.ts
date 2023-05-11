@@ -8,6 +8,7 @@ import {
   weekPush,
   monthPush,
 } from "./middleware/index";
+import { sendInfo } from './h.test'
 
 export const name = "rpixiv";
 
@@ -135,6 +136,10 @@ export function apply(ctx: Context, config: Config) {
   rPixiv.token().then(() => {
     logger.success("已启动")
   });
+
+  // ctx.on("message", (session) => {
+  //   session.send(sendInfo())
+  // })
 
 
   

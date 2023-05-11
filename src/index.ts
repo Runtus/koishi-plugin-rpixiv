@@ -1,5 +1,6 @@
-import { Context, Schema } from "koishi";
+import { Context, Schema, Logger } from "koishi";
 import { RPixiv } from "runtu-pixiv-sdk";
+import { logger } from './logger'
 import {
   rPixivIllustsSearch,
   rPixivAuthorSearch,
@@ -81,6 +82,7 @@ const commandFuncGenerate = (
   return funcs_keywords;
 };
    
+// TODO 根据Schema进行优化，优化为插件的形式
 export function apply(ctx: Context, config: Config) {
   // trigger keywords设置
   const keywords = [
@@ -111,6 +113,8 @@ export function apply(ctx: Context, config: Config) {
     },
   ];
 
+  logger.info("bot启动中.....");
+
   const funcs = [
     datePush,
     weekPush,
@@ -128,7 +132,12 @@ export function apply(ctx: Context, config: Config) {
   // 环境变量设置
   process.env.REFRESH_TOKEN = config.token;
   // token初始化
-  rPixiv.token();
+  rPixiv.token().then(() => {
+    logger.success("已启动")
+  });
+
+
+  
 
   // 指令设置
   commands.forEach((item) => {

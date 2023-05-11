@@ -11,3 +11,7 @@
 3. proxy.isOpen设置为true时，下方的代理配置才会生效，否则会默认为undefined
 
 > 该机器人的pixiv爬取程序基于[runtus-pixiv-sdk](https://github.com/Runtus/runtu-pixiv-sdk)
+
+
+### Questions
+1. 如果pixiv-token初始化失败，即refreshtoken获取失败，没有再次去请求refreshtoken的机制。

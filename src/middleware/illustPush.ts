@@ -1,6 +1,7 @@
 import { Middleware, Element } from "koishi";
 import { RPixiv } from "runtu-pixiv-sdk";
 import { requestBuffers } from "../components";
+import { logger } from "../logger";
 
 export const illustsPush: (
   type: string,
@@ -23,14 +24,14 @@ export const illustsPush: (
     let info: string | Element
     try {
         const response = await requestFn.call(rPixiv, "")
-        if (response.illusts.length !== 0) {
+        if (response.illusts) {
             info = await requestBuffers(response.illusts, rPixiv)
         } else {
-            info = "网络出现错误，请联系管理员"
+            info = "请求的插画数为0"
         }
     } catch (err) {
-        console.error(err)
-        info = "出现未知错误，请联系管理员"
+      logger.error(err)
+      info = "出现未知错误，可能是token失效或网络问题导致图片请求失败，请联系管理员"
     }
     return info
 };

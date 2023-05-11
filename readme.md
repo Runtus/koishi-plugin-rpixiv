@@ -13,5 +13,7 @@
 > 该机器人的pixiv爬取程序基于[runtus-pixiv-sdk](https://github.com/Runtus/runtu-pixiv-sdk)
 
 
-### Questions
-1. 如果pixiv-token初始化失败，即refreshtoken获取失败，没有再次去请求refreshtoken的机制。
+### TODO List
+[] 增加日常推送功能，给指定群聊或指定用户推送
+[] 增加随机图片功能
+[] 搜索图片命令增加图片展示区间和上限功能（搜索的图片有很多，可以指定其中的第n张到m张展示） 

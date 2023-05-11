@@ -6,8 +6,8 @@ import { requestBuffers } from "../components";
 export const rPixivIllustsSearch: (
   params: string,
   r: RPixiv
-) => Promise<string | Element> = async (params, rpixiv) => {
-  let info: string | Element;
+) => Promise<string | Element | Element[]> = async (params, rpixiv) => {
+  let info: string | Element | Element[];
 
   try {
     const response = await rpixiv.searchIllusts(params);

@@ -33,7 +33,6 @@ export const illustsPush: (
         if (response.illusts) {
             // info = await requestBuffers(response.illusts, rPixiv)
           response.illusts =  response.illusts.slice(0, 10)
-          console.log(response)
           info = h("div", {}, h("h3", {}, `🌟Pixiv${TypesToChinese[type]}排行榜🌟  📅${response.date}`), await requestBuffers(response.illusts, rPixiv))
         } else {
             info = "请求的插画数为0"

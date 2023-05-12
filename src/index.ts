@@ -41,7 +41,6 @@ export const Config = Schema.intersect([
 
   Schema.object({
     instr: Schema.object({
-      
       day: Schema.string()
         .description("每日推荐榜的触发语，紧跟着start字段触发词")
         .default("查询每日排行榜"),

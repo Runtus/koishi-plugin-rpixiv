@@ -11,13 +11,13 @@ export const rPixivIllustsSearch: (
 
   try {
     const response = await rpixiv.searchIllusts(params);
+    console.log(response.illusts)
     if (!response.illusts) {
       info = "搜索的插画数为0，请检查关键字是否正确";
     } else {
       info = await requestBuffers(response.illusts, rpixiv);
     }
   } catch (err) {
-    console.error("error",err);
     logger.error(err);
     info = "出现了未知的错误，请联系管理员";
   }

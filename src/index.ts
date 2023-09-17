@@ -13,8 +13,8 @@ export const name = "rpixiv";
 
 export interface Config {
   token: string;
-  start: string;
-  instr: {
+  command: string;
+  subcommand: {
     day: string;
     week: string;
     month: string;
@@ -36,11 +36,11 @@ export const Config = Schema.intersect([
   Schema.object({}).description("机器人触发语设置"),
   
   Schema.object({
-    start: Schema.string().description("机器人启示触发语").default("rPixiv酱"),
+    command: Schema.string().description("机器人启示触发语").default("rPixiv酱"),
   }),
 
   Schema.object({
-    instr: Schema.object({
+    subcommand: Schema.object({
       day: Schema.string()
         .description("每日推荐榜的触发语，紧跟着start字段触发词")
         .default("查询每日排行榜"),
@@ -97,15 +97,15 @@ const commandFuncGenerate = (
    
 // TODO 根据Schema进行优化，优化为插件的形式
 export function apply(ctx: Context, config: Config) {
-  const start = config.start;
   const keywords: Array<{
     keyword: string,
     usage: string,
     example: string
   }> = [];
-  for(const [key, value] of Object.entries(config.instr)){
+
+  for(const [_, value] of Object.entries(config.subcommand)){
     keywords.push({
-      keyword: `${start}/${value}`,
+      keyword: `${value}`,
       usage: `${value}`,
       example: `${value}`
     })
@@ -141,7 +141,8 @@ export function apply(ctx: Context, config: Config) {
   // 指令设置
   commands.forEach((item) => {
     ctx
-      .command(item.kInfo.keyword)
+      .command(config.command, { authority: 1 })
+      .subcommand(item.kInfo.keyword, {authority: 1})
       .usage(item.kInfo.usage)
       .example(item.kInfo.example)
       .action((_, params) => item.func(params, rPixiv));

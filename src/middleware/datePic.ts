@@ -1,9 +1,7 @@
 // 每日推送
 import { Context, Element } from "koishi";
 import moment from "moment";
-import { datePush } from "./index";
 import { logger } from "../logger";
-import { RPixiv } from "runtu-pixiv-sdk";
 
 const ONE_DAY_GAP = 1000 * 60 * 60 * 24;
 
@@ -16,16 +14,26 @@ export const datePicSubscr =
 export const picPushExec =
   (
     timer: string,
-    r: RPixiv,
     boardcastFn: (h: string | Element) => Promise<void>,
     getContentFn: (...params) => Promise<Element | string>
   ) =>
   async (...params) => {
-    const triggerTimer =
-        Number(moment(moment().format(`${moment().format("YYYY-MM-DD")} ${timer}`))
-            .format("x"))
-        + ONE_DAY_GAP;
-    const now = Number(moment().format("x"));
+    const formatMoment = moment(
+      moment().format("YYYY-MM-DD") + " " + timer
+    ).valueOf();
+    let triggerTimer = Number(formatMoment);
+    const now = moment().valueOf();
+    if (isNaN(triggerTimer)) {
+      logger.error("推送时间设置错误，请检查设置时间是否符合格式 HH:MM:SS");
+      return;
+    }
+
+    // 如果设置的时间今天已经过了，则设置在第二天
+    if (now > triggerTimer) {
+      triggerTimer = moment(triggerTimer).add(1, "day").valueOf();
+    }
+
+    console.log(moment(triggerTimer).format(), moment(now).format());
     const gap = triggerTimer - now;
 
     if (isNaN(gap) || gap < 0) {
@@ -34,13 +42,14 @@ export const picPushExec =
     }
 
     const exec = async (gap: number) => {
-      const h = await getContentFn(params);
       setTimeout(() => {
-        // 推送执行
-        boardcastFn(h);
-        exec(ONE_DAY_GAP);
+        getContentFn(...params).then((h) => {
+          boardcastFn(h);
+          exec(ONE_DAY_GAP);
+        });
       }, gap);
     };
     // 执行pic推送
+    console.log(gap);
     exec(gap);
   };

@@ -71,7 +71,7 @@ export const Config = Schema.intersect([
   Schema.union([
     Schema.object({
       enabled: Schema.const(true).required(),
-      channles: Schema.array(String).required().description("群号/频道号"),
+      channels: Schema.array(String).required().description("群号/频道号"),
       clock: Schema.string().default("11:41:54").description("推送时间（精确到秒）")
     })
   ]),
@@ -162,12 +162,12 @@ export function apply(ctx: Context, config: Config) {
       .example(item.kInfo.example)
       .action((_, params) => item.func(params, rPixiv));
   });
-
+  
 
   // 活动订阅
-  if (config.enabled) {
+  if (config.enabled && config.channels) {
     const picsSub = datePicSubscr(ctx, config.channels);
-    const picsPush = picPushExec(config.clock, rPixiv, picsSub, datePush);
+    const picsPush = picPushExec(config.clock, picsSub, datePush);
     picsPush("", rPixiv);
   }
 }

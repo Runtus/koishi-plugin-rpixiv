@@ -7,6 +7,8 @@ import {
   datePush,
   weekPush,
   monthPush,
+  datePicSubscr,
+  picPushExec
 } from "./middleware/index";
 
 export const name = "rpixiv";
@@ -21,6 +23,9 @@ export interface Config {
     searchIllusts: string;
     searchAuthor: string;
   },
+  enabled: boolean,
+  channels: Array<string>,
+  clock: string,
   proxy: {
     isOpen: boolean;
     host: string;
@@ -58,6 +63,19 @@ export const Config = Schema.intersect([
         .default("搜索作者"),
       }),
   }),
+
+  Schema.object({
+    enabled: Schema.boolean().default(false)
+  }).description("每日推送"),
+
+  Schema.union([
+    Schema.object({
+      enabled: Schema.const(true).required(),
+      channels: Schema.array(String).required().description("群号/频道号"),
+      clock: Schema.string().default("11:41:54").description("推送时间（精确到秒）")
+    })
+  ]),
+
   Schema.object({}).description("代理设置"),
 
   Schema.object({
@@ -111,9 +129,6 @@ export function apply(ctx: Context, config: Config) {
     })
   }
  
-
-  logger.info("bot启动中.....");
-
   const funcs = [
     datePush,
     weekPush,
@@ -123,6 +138,8 @@ export function apply(ctx: Context, config: Config) {
   ];
 
   const commands = commandFuncGenerate(keywords, funcs);
+
+  logger.info("bot启动中.....");
 
   const rPixiv = new RPixiv(
     config.proxy.isOpen ? { ...config.proxy } : undefined
@@ -136,8 +153,6 @@ export function apply(ctx: Context, config: Config) {
   });
 
 
-  
-
   // 指令设置
   commands.forEach((item) => {
     ctx
@@ -147,4 +162,12 @@ export function apply(ctx: Context, config: Config) {
       .example(item.kInfo.example)
       .action((_, params) => item.func(params, rPixiv));
   });
+  
+
+  // 活动订阅
+  if (config.enabled && config.channels) {
+    const picsSub = datePicSubscr(ctx, config.channels);
+    const picsPush = picPushExec(config.clock, picsSub, datePush);
+    picsPush("", rPixiv);
+  }
 }

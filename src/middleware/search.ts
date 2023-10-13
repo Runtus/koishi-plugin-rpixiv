@@ -2,20 +2,22 @@ import { Element } from "koishi";
 import { logger } from '../logger'
 import { RPixiv, WebPixivType } from "runtu-pixiv-sdk";
 import { requestBuffers } from "../components";
+import { random } from '../tool'
 
 export const rPixivIllustsSearch: (
-  params: string,
+  params: string[],
   r: RPixiv
 ) => Promise<string | Element | Element[]> = async (params, rpixiv) => {
   let info: string | Element | Element[];
-
+  const keyword = params[0];
   try {
-    const response = await rpixiv.searchIllusts(params);
-    console.log(response.illusts)
+    const response = (await rpixiv.searchIllusts(keyword)).data;
     if (!response.illusts) {
       info = "搜索的插画数为0，请检查关键字是否正确";
     } else {
-      info = await requestBuffers(response.illusts, rpixiv);
+      const randoms = random(10, 29);
+      const illusts = randoms.map(num => response.illusts[num])
+      info = await requestBuffers(illusts, rpixiv);
     }
   } catch (err) {
     logger.error(err);
@@ -26,18 +28,18 @@ export const rPixivIllustsSearch: (
 };
 
 export const rPixivAuthorSearch: (
-  params: string,
+  params: string[],
   r: RPixiv
 ) => Promise<string | Element> = async (params, rpixiv) => {
   let info: string | Element;
-
+  const keyword = params[0];
   try {
     const response = await Promise.all([
-      rpixiv.getAuthorInfo(params),
-      rpixiv.getAuthorIllusts(params, "illust"),
+      rpixiv.getAuthorInfo(keyword),
+      rpixiv.getAuthorIllusts(keyword, "illust"),
     ]);
-    const user = response[0].user;
-    const illusts = response[1].illusts;
+    const user = response[0].data.user;
+    const illusts = response[1].data.illusts;
 
     // @ts-ignore TODO 修复rpixivSDK上的类型
     const comment = user.comment as string;

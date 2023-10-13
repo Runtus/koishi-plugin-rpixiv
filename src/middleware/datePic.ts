@@ -49,7 +49,5 @@ export const picPushExec =
         });
       }, gap);
     };
-    // 执行pic推送
-    console.log(gap);
     exec(gap);
   };

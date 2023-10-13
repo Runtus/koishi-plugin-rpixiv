@@ -34,6 +34,6 @@
     "axios": "0.26.1",
     "dotenv": "^16.0.3",
     "moment": "^2.29.4",
-    "runtu-pixiv-sdk": "^1.1.0"
+    "runtu-pixiv-sdk": "^2.0.0-beta.1"
   }
 }

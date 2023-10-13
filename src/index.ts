@@ -1,6 +1,7 @@
-import { Context, Schema, Logger } from "koishi";
+import { Context, Schema } from "koishi";
 import { RPixiv } from "runtu-pixiv-sdk";
 import { logger } from './logger'
+import { status } from './status'
 import {
   rPixivIllustsSearch,
   rPixivAuthorSearch,
@@ -11,7 +12,13 @@ import {
   picPushExec
 } from "./middleware/index";
 
-export const name = "rpixiv";
+
+// TODO 后续考虑引入全局状态管理
+export const pixelParams: {
+  low: string,
+  medium: string,
+  large: string
+} = null;
 
 export interface Config {
   token: string;
@@ -22,6 +29,11 @@ export interface Config {
     month: string;
     searchIllusts: string;
     searchAuthor: string;
+  },
+  pixel: {
+    low: string,
+    medium: string,
+    large: string
   },
   enabled: boolean,
   channels: Array<string>,
@@ -61,7 +73,7 @@ export const Config = Schema.intersect([
       searchAuthor: Schema.string()
         .description("输入作者pid号，获取作者相关信息")
         .default("搜索作者"),
-      }),
+    }),
   }),
 
   Schema.object({
@@ -72,9 +84,19 @@ export const Config = Schema.intersect([
     Schema.object({
       enabled: Schema.const(true).required(),
       channels: Schema.array(String).required().description("群号/频道号"),
-      clock: Schema.string().default("11:41:54").description("推送时间（精确到秒）")
+      clock: Schema.string().default("11:41:54").description("推送时间（精确到秒）"),
     })
   ]),
+
+  Schema.object({}).description("图片清晰度参数名称设置"),
+
+  Schema.object({
+    pixel: Schema.object({
+      low: Schema.string().default("s").description("低画质"),
+      medium: Schema.string().default("m").description("中等画质"),
+      large: Schema.string().default("l").description("高画质")
+    })
+  }),
 
   Schema.object({}).description("代理设置"),
 
@@ -91,11 +113,11 @@ export const Config = Schema.intersect([
 
 const commandFuncGenerate = (
   keywords: Array<{ keyword: string; usage: string; example: string }>,
-  funcs: Array<(params: string, r: RPixiv) => any>
+  funcs: Array<(params: string[], r: RPixiv) => any>
 ) => {
   const funcs_keywords: Array<{
     kInfo: { keyword: string; usage: string; example: string };
-    func: (params: string, r: RPixiv) => any;
+    func: (params: string[], r: RPixiv) => any;
   }> = [];
   if (keywords.length !== funcs.length) {
     logger.debug("检查指令数和指令功能函数是否一致");
@@ -120,6 +142,13 @@ export function apply(ctx: Context, config: Config) {
     usage: string,
     example: string
   }> = [];
+
+  // 画质参数名称设置
+  const { pixel } = config;
+  const { setPixel } = status();
+  // pixel_setting状态设置
+  setPixel(pixel);
+
 
   for(const [_, value] of Object.entries(config.subcommand)){
     keywords.push({
@@ -160,7 +189,7 @@ export function apply(ctx: Context, config: Config) {
       .subcommand(item.kInfo.keyword, {authority: 1})
       .usage(item.kInfo.usage)
       .example(item.kInfo.example)
-      .action((_, params) => item.func(params, rPixiv));
+      .action((_, ...params) => item.func(params, rPixiv));
   });
   
 
@@ -168,6 +197,6 @@ export function apply(ctx: Context, config: Config) {
   if (config.enabled && config.channels) {
     const picsSub = datePicSubscr(ctx, config.channels);
     const picsPush = picPushExec(config.clock, picsSub, datePush);
-    picsPush("", rPixiv);
+    picsPush(["l"], rPixiv);
   }
 }

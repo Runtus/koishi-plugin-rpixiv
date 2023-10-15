@@ -10,11 +10,14 @@ enum TypesToChinese {
   "month" = "每月",
 }
 
+const DEFAULT_NUM = 10;
+
 export const illustsPush: (
   type: string,
   r: RPixiv,
-  p?: PixelLevel
-) => Promise<string | Element> = async (type, rPixiv, pixel) => {
+  p?: PixelLevel,
+  l?: number
+) => Promise<string | Element> = async (type, rPixiv, pixel, num = DEFAULT_NUM) => {
   let requestFn:
     | RPixiv["getMonthRanks"]
     | RPixiv["getDayRanks"]
@@ -34,7 +37,7 @@ export const illustsPush: (
     const response = (await requestFn.call(rPixiv, "")).data as WebPixivType;
     if (response.illusts) {
       const date = response.next_url.split("&")[2].split("=")[1];
-      const illusts = response.illusts.slice(0, 10);
+      const illusts = response.illusts.slice(0, num);
       info = h(
         "div",
         {},

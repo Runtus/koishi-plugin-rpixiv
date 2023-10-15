@@ -1,4 +1,4 @@
-import { Context, Schema } from "koishi";
+import { Command, Context, Schema, h } from "koishi";
 import { RPixiv } from "runtu-pixiv-sdk";
 import { logger } from './logger'
 import { status } from './status'
@@ -33,8 +33,10 @@ export interface Config {
   pixel: {
     low: string,
     medium: string,
-    large: string
+    large: string,
+    origin: string,
   },
+  default: string
   enabled: boolean,
   channels: Array<string>,
   clock: string,
@@ -88,15 +90,20 @@ export const Config = Schema.intersect([
     })
   ]),
 
-  Schema.object({}).description("图片清晰度参数名称设置"),
+  Schema.object({}).description("图片画质参数设置"),
 
   Schema.object({
     pixel: Schema.object({
       low: Schema.string().default("s").description("低画质"),
       medium: Schema.string().default("m").description("中等画质"),
-      large: Schema.string().default("l").description("高画质")
-    })
+      large: Schema.string().default("l").description("高画质"),
+      origin: Schema.string().default("o").description("原画质"),
+    }),
+    default: Schema.union(["低画质", "中等画质", "高画质", "原画质"]).default("中等画质").description("所有图片的默认画质设置")
   }),
+
+
+  
 
   Schema.object({}).description("代理设置"),
 
@@ -108,15 +115,16 @@ export const Config = Schema.intersect([
     })
   }),
 
-
 ]);
 
+
+
 const commandFuncGenerate = (
-  keywords: Array<{ keyword: string; usage: string; example: string }>,
+  keywords: Array<{ keyword: string; usage: string; example: string, desc: string }>,
   funcs: Array<(params: string[], r: RPixiv) => any>
 ) => {
   const funcs_keywords: Array<{
-    kInfo: { keyword: string; usage: string; example: string };
+    kInfo: { keyword: string; usage: string; example: string, desc: string };
     func: (params: string[], r: RPixiv) => any;
   }> = [];
   if (keywords.length !== funcs.length) {
@@ -134,27 +142,60 @@ const commandFuncGenerate = (
 
   return funcs_keywords;
 };
+
    
 // TODO 根据Schema进行优化，优化为插件的形式
 export function apply(ctx: Context, config: Config) {
   const keywords: Array<{
     keyword: string,
     usage: string,
-    example: string
+    example: string,
+    desc: string
   }> = [];
 
   // 画质参数名称设置
-  const { pixel } = config;
-  const { setPixel } = status();
+  const { pixel, default: defaultPixel } = config;
+  const { setPixel, setDefaultPixel } = status();
   // pixel_setting状态设置
   setPixel(pixel);
+  setDefaultPixel(defaultPixel);
+
+  const commandDescAndexamMap = {
+    day: {
+      desc: "获取pixiv每日排行榜作品",
+      usage: `${config.subcommand.day} <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
+      example: `${config.subcommand.day} ${config.pixel.origin} 10   将获得10张原画质的pixiv图片推送`
+    },
+    week: {
+      desc: "获取pixiv每周排行榜作品",
+      usage: `${config.subcommand.week} <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
+      example: `${config.subcommand.week} ${config.pixel.origin} 10   将获得10张原画质的pixiv图片推送`
+    },
+    month: {
+      desc: "获取pixiv每月排行榜作品",
+      usage: `${config.subcommand.month} <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
+      example: `${config.subcommand.month} ${config.pixel.origin} 10   将获得10张原画质的pixiv图片推送`
+    },
+    searchIllusts: {
+      desc: "根据关键字查询作品",
+      usage: `${config.subcommand.searchIllusts} <keyword> <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
+      example: `${config.subcommand.searchIllusts} 原神 ${config.pixel.origin} 10  将获得10张原画质的原神主题相关pixiv图片推送`
+    },
+    searchAuthor: {
+      desc: "根据作者id查询作者信息（包括介绍和相关作品）",
+      usage: `${config.subcommand.searchAuthor} <author_id> <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
+      example: `${config.subcommand.searchAuthor} 114514 ${config.pixel.origin} 10  将获得pixiv作者id为114514的作者相关信息，并附带它的10张相关原画质pixiv作品`
+    }
+  }
+  
 
 
-  for(const [_, value] of Object.entries(config.subcommand)){
+  for (const [key, value] of Object.entries(config.subcommand)) {
     keywords.push({
       keyword: `${value}`,
-      usage: `${value}`,
-      example: `${value}`
+      usage: commandDescAndexamMap[key].usage,
+      example: commandDescAndexamMap[key].example,
+      desc: commandDescAndexamMap[key].desc
     })
   }
  
@@ -181,22 +222,25 @@ export function apply(ctx: Context, config: Config) {
     logger.success("已启动")
   });
 
-
-  // 指令设置
+  // 推送指令设置
   commands.forEach((item) => {
     ctx
-      .command(config.command, { authority: 1 })
-      .subcommand(item.kInfo.keyword, {authority: 1})
+      .command(config.command,item.kInfo.desc ,{ authority: 1 })
+      .subcommand(item.kInfo.keyword, { authority: 1 })
       .usage(item.kInfo.usage)
       .example(item.kInfo.example)
       .action((_, ...params) => item.func(params, rPixiv));
   });
+
+  // 画质查询指令
+  ctx.command("pixel", "画质参数设置", { authority: 1 })
+    .action(() => h('p', `当前画质参数设置: \n低画质: ${config.pixel.low} \n中等画质: ${config.pixel.medium} \n高画质: ${config.pixel.large} \n原画质: ${config.pixel.origin}`))
   
 
   // 活动订阅
   if (config.enabled && config.channels) {
     const picsSub = datePicSubscr(ctx, config.channels);
     const picsPush = picPushExec(config.clock, picsSub, datePush);
-    picsPush(["l"], rPixiv);
+    picsPush([], rPixiv);
   }
 }

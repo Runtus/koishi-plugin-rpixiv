@@ -1,14 +1,18 @@
 import { RPixiv, WebPixivType } from "runtu-pixiv-sdk";
+import { pixelUrlsFormat } from './pixel'
 import { h } from "koishi";
 import { logger } from '../logger'
+import { PixelLevel } from '../type'
 
 
-export const requestBuffers = (resp: WebPixivType["illusts"], r: RPixiv) => {
+export const requestBuffers = (resp: WebPixivType["illusts"], r: RPixiv, pixel: PixelLevel = PixelLevel.MEDIUM) => {
   const promise = [];
-  resp.slice(0, 10).forEach((item) => {
-    promise.push(r.getPixivStream(item.image_urls.medium, "arraybuffer").catch(err => {
+  const urls = pixelUrlsFormat(resp);
+  urls.forEach((item, index) => {
+    
+    promise.push(r.getPixivStream(item[pixel], "arraybuffer").catch(err => {
       logger.error(err);
-      logger.error(`网络问题，请求图片${item.title}失败`);
+      logger.error(`网络问题，请求图片${resp[index].title}失败`);
       return null;
     }));
   });

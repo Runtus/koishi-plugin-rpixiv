@@ -85,7 +85,7 @@ export const Config = Schema.intersect([
   Schema.union([
     Schema.object({
       enabled: Schema.const(true).required(),
-      channels: Schema.array(String).required().description("群号/频道号"),
+      channels: Schema.array(String).required().description("频道/群号填写规则: <平台名称>:<频道号> 例如想推送到某kook频道，则写为 kook:1234567"),
       clock: Schema.string().default("11:41:54").description("推送时间（精确到秒）"),
     })
   ]),

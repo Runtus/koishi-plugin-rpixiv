@@ -1,6 +1,6 @@
 import { Element } from "koishi";
 import { logger } from '../logger'
-import { status } from '../status'
+import { useState } from '../status'
 import { WebPixivType } from "runtu-pixiv-sdk";
 import { requestBuffers } from "../components";
 import { random } from '../tool'
@@ -11,7 +11,7 @@ const DEFAULT_PIXEL = PixelLevel.MEDIUM
 
 // params做统一处理，keyword：搜索关键词. pixel_param: 图片画质，num: 本次请求的图片数
 const rPixivSearch: RPixivFC = (fc) => (params, rpixiv) => {
-  const { getPixel, getDefaultPixel } = status();
+  const { getPixel, getDefaultPixel } = useState();
   const keyword = params[0], pixel_param = params[1] || getDefaultPixel(), num = isNaN(Number(params[2])) ? undefined : Number(params[2]);
   const pixelSetting = getPixel();
   let pixel_level: PixelLevel | null;

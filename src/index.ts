@@ -1,15 +1,14 @@
 import { Command, Context, Schema, h } from "koishi";
+import { Clock } from './components/clock'
 import { RPixiv } from "runtu-pixiv-sdk";
 import { logger } from './logger'
-import { status } from './status'
+import { useState } from './status'
 import {
   rPixivIllustsSearch,
   rPixivAuthorSearch,
   datePush,
   weekPush,
-  monthPush,
-  datePicSubscr,
-  picPushExec
+  monthPush
 } from "./middleware/index";
 
 
@@ -20,7 +19,7 @@ export const pixelParams: {
   large: string
 } = null;
 
-export interface Config {
+export type Config = {
   token: string;
   command: string;
   subcommand: {
@@ -79,16 +78,11 @@ export const Config = Schema.intersect([
   }),
 
   Schema.object({
-    enabled: Schema.boolean().default(false)
-  }).description("每日推送"),
+    enabled: Schema.boolean().default(false).description("是否开启日常推送功能"),
+    channels: Schema.array(String).default(["kook:114514"]).description("频道/群号填写规则: <平台名称>:<频道号> 例如想推送到某kook频道，则写为 kook:1234567"),
+    clock: Schema.string().default("11:41:54").description("推送时间（精确到秒）"),
+  }).description("每日推送设置"),
 
-  Schema.union([
-    Schema.object({
-      enabled: Schema.const(true).required(),
-      channels: Schema.array(String).required().description("频道/群号填写规则: <平台名称>:<频道号> 例如想推送到某kook频道，则写为 kook:1234567"),
-      clock: Schema.string().default("11:41:54").description("推送时间（精确到秒）"),
-    })
-  ]),
 
   Schema.object({}).description("图片画质参数设置"),
 
@@ -155,7 +149,7 @@ export function apply(ctx: Context, config: Config) {
 
   // 画质参数名称设置
   const { pixel, default: defaultPixel } = config;
-  const { setPixel, setDefaultPixel } = status();
+  const { setPixel, setDefaultPixel } = useState();
   // pixel_setting状态设置
   setPixel(pixel);
   setDefaultPixel(defaultPixel);
@@ -230,7 +224,7 @@ export function apply(ctx: Context, config: Config) {
       .usage(item.kInfo.usage)
       .example(item.kInfo.example)
       .action((_, ...params) => item.func(params, rPixiv));
-  });
+  })
 
   // 画质查询指令
   ctx.command("pixel", "画质参数设置", { authority: 1 })
@@ -239,8 +233,12 @@ export function apply(ctx: Context, config: Config) {
 
   // 活动订阅
   if (config.enabled && config.channels) {
-    const picsSub = datePicSubscr(ctx, config.channels);
-    const picsPush = picPushExec(config.clock, picsSub, datePush);
-    picsPush([], rPixiv);
+    logger.info("日常推送已启动")
+    const clock = Clock.getInstance();
+    clock.addChannel(config.channels);
+    clock.setClock(config.clock);
+    clock.start(ctx, () => {
+      return datePush([], rPixiv)
+    })
   }
 }

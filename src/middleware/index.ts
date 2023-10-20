@@ -1,11 +1,11 @@
 import { illustsPush } from './illustPush'
 import { RPixiv } from 'runtu-pixiv-sdk'
-import { status } from '../status'
+import { useState } from '../status'
 import { PixelLevel } from '../type'
 
 // params: 指令参数
 const pushGenearte = (type: string) => async (params: string[], r: RPixiv) => {
-    const { getPixel, getDefaultPixel } = status();
+    const { getPixel, getDefaultPixel } = useState();
     const pixelSetting = getPixel();
     // 默认是meduim画质
     const pixel_param = params[0] ? params[0].toLowerCase(): getDefaultPixel();
@@ -44,5 +44,4 @@ export const monthPush = pushGenearte('month')
 
 export * from './illustPush'
 export * from './search'
-export * from './datePic'
 

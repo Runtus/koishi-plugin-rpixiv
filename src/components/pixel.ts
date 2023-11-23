@@ -6,11 +6,12 @@ export const pixelUrlsFormat: (i: WebPixivType["illusts"]) => PixelFormatUrls[] 
     // meta_pages 和 meta_single_page 是互斥有值的
     if (item.meta_pages.length !== 0) {
         // TODO meta_pages有多个，后续看如何把多个images放到一个展示页里
+        // TODO bugfix：去查看rpixivsdk中的类型定义是否有误
         return {
-            [PixelLevel.ORIGIN]: item.meta_pages[0].image_urls.original,
-            [PixelLevel.LARGE]: item.meta_pages[0].image_urls.large,
-            [PixelLevel.MEDIUM]: item.meta_pages[0].image_urls.medium,
-            [PixelLevel.SMALL]: item.meta_pages[0].image_urls.square_medium
+            [PixelLevel.ORIGIN]: (item.meta_pages[0] as any).image_urls.original,
+            [PixelLevel.LARGE]: (item.meta_pages[0] as any).image_urls.large,
+            [PixelLevel.MEDIUM]: (item.meta_pages[0] as any).image_urls.medium,
+            [PixelLevel.SMALL]: (item.meta_pages[0] as any).image_urls.square_medium
         }
     } else {
         return {

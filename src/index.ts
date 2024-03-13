@@ -3,14 +3,11 @@ import { RPixiv } from "runtu-pixiv-sdk";
 import { logger } from './logger'
 import { status } from './status'
 import {
-  rPixivIllustsSearch,
-  rPixivAuthorSearch,
   datePush,
-  weekPush,
-  monthPush,
   datePicSubscr,
   picPushExec
 } from "./middleware/index";
+import { CommandsInit } from './commands'
 
 
 // TODO 后续考虑引入全局状态管理
@@ -104,8 +101,6 @@ export const Config = Schema.intersect([
   }),
 
 
-  
-
   Schema.object({}).description("代理设置"),
 
   Schema.object({
@@ -118,41 +113,9 @@ export const Config = Schema.intersect([
 
 ]);
 
-
-
-const commandFuncGenerate = (
-  keywords: Array<{ keyword: string; usage: string; example: string, desc: string }>,
-  funcs: Array<(params: string[], r: RPixiv) => any>
-) => {
-  const funcs_keywords: Array<{
-    kInfo: { keyword: string; usage: string; example: string, desc: string };
-    func: (params: string[], r: RPixiv) => any;
-  }> = [];
-  if (keywords.length !== funcs.length) {
-    logger.debug("检查指令数和指令功能函数是否一致");
-    return funcs_keywords;
-  }
-
-
-  keywords.forEach((item, index) => {
-    funcs_keywords.push({
-      kInfo: item,
-      func: funcs[index],
-    });
-  });
-
-  return funcs_keywords;
-};
-
    
 // TODO 根据Schema进行优化，优化为插件的形式
 export function apply(ctx: Context, config: Config) {
-  const keywords: Array<{
-    keyword: string,
-    usage: string,
-    example: string,
-    desc: string
-  }> = [];
 
   // 画质参数名称设置
   const { pixel, default: defaultPixel } = config;
@@ -161,57 +124,7 @@ export function apply(ctx: Context, config: Config) {
   setPixel(pixel);
   setDefaultPixel(defaultPixel);
 
-  const commandDescAndexamMap = {
-    day: {
-      desc: "获取pixiv每日排行榜作品",
-      usage: `${config.subcommand.day} <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
-      example: `${config.subcommand.day} ${config.pixel.origin} 10   将获得10张原画质的pixiv图片推送`
-    },
-    week: {
-      desc: "获取pixiv每周排行榜作品",
-      usage: `${config.subcommand.week} <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
-      example: `${config.subcommand.week} ${config.pixel.origin} 10   将获得10张原画质的pixiv图片推送`
-    },
-    month: {
-      desc: "获取pixiv每月排行榜作品",
-      usage: `${config.subcommand.month} <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
-      example: `${config.subcommand.month} ${config.pixel.origin} 10   将获得10张原画质的pixiv图片推送`
-    },
-    searchIllusts: {
-      desc: "根据关键字查询作品",
-      usage: `${config.subcommand.searchIllusts} <keyword> <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
-      example: `${config.subcommand.searchIllusts} 原神 ${config.pixel.origin} 10  将获得10张原画质的原神主题相关pixiv图片推送`
-    },
-    searchAuthor: {
-      desc: "根据作者id查询作者信息（包括介绍和相关作品）",
-      usage: `${config.subcommand.searchAuthor} <author_id> <pic_quality> <pic_num>, 输入命令 pixel 查询画质参数(pic_quality)设置`,
-      example: `${config.subcommand.searchAuthor} 114514 ${config.pixel.origin} 10  将获得pixiv作者id为114514的作者相关信息，并附带它的10张相关原画质pixiv作品`
-    }
-  }
-  
-
-
-  for (const [key, value] of Object.entries(config.subcommand)) {
-    keywords.push({
-      keyword: `${value}`,
-      usage: commandDescAndexamMap[key].usage,
-      example: commandDescAndexamMap[key].example,
-      desc: commandDescAndexamMap[key].desc
-    })
-  }
- 
-  const funcs = [
-    datePush,
-    weekPush,
-    monthPush,
-    rPixivIllustsSearch,
-    rPixivAuthorSearch,
-  ];
-
-  const commands = commandFuncGenerate(keywords, funcs);
-
   logger.info("bot启动中.....");
-
   const rPixiv = new RPixiv(
     config.proxy.isOpen ? { ...config.proxy } : undefined
   );
@@ -223,19 +136,9 @@ export function apply(ctx: Context, config: Config) {
     logger.success("已启动")
   });
 
-  // 推送指令设置
-  commands.forEach((item) => {
-    ctx
-      .command(config.command,item.kInfo.desc ,{ authority: 1 })
-      .subcommand(item.kInfo.keyword, { authority: 1 })
-      .usage(item.kInfo.usage)
-      .example(item.kInfo.example)
-      .action((_, ...params) => item.func(params, rPixiv));
-  });
+  // 指令初始化
+  CommandsInit(ctx, config, rPixiv);
 
-  // 画质查询指令
-  ctx.command("pixel", "画质参数设置", { authority: 1 })
-    .action(() => h('p', `当前画质参数设置: \n低画质: ${config.pixel.low} \n中等画质: ${config.pixel.medium} \n高画质: ${config.pixel.large} \n原画质: ${config.pixel.origin}`))
   
 
   // 活动订阅

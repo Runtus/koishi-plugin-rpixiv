@@ -9,7 +9,8 @@ export enum PixelLevel {
 }
 
 export type RPixivParamFC = (rpixiv: RPixiv, keyword: string, pixel_level: PixelLevel, num: number) => Promise<string | Element | Element[]>;
-export type RPixivFC<T = string[]> = (fc: RPixivParamFC) => ((params: T, r: RPixiv) => Promise<string | Element | Element[]>)
+export type RPixivReturnFc<T = string[]> = ((params: T, r: RPixiv) => Promise<string | Element | Element[]>);
+export type RPixivFC<T = string[]> = (fc: RPixivParamFC) => RPixivReturnFc<T>;
 
 export type PixelFormatUrls = {
     [PixelLevel.SMALL]: string,
@@ -17,3 +18,6 @@ export type PixelFormatUrls = {
     [PixelLevel.LARGE]: string,
     [PixelLevel.ORIGIN]: string
 }
+
+
+export * from './commands/type'
